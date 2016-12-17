@@ -16,6 +16,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import java.io.FileNotFoundException;
 
@@ -85,14 +86,18 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == 100){
             if(resultCode == Activity.RESULT_OK){
-                Uri uri=data.getData();
-                ContentResolver cr = this.getContentResolver();
-                try {
-                    Bitmap bitmap = BitmapFactory.decodeStream(cr.openInputStream(uri));
-                    ImageView imageView = (ImageView) findViewById(R.id.imageView);
-                    imageView.setImageBitmap(bitmap);
-                } catch (Exception e) {
-                    Log.v("brad",e.toString());
+                if (data !=null) {
+                    Uri uri = data.getData();
+                    ContentResolver cr = this.getContentResolver();
+                    try {
+                        Bitmap bitmap = BitmapFactory.decodeStream(cr.openInputStream(uri));
+                        ImageView imageView = (ImageView) findViewById(R.id.imageView);
+                        imageView.setImageBitmap(bitmap);
+                    } catch (Exception e) {
+                        Log.v("brad", e.toString());
+                    }
+                }else{
+                    Toast.makeText(this,"無法找到檔案",Toast.LENGTH_LONG).show();
                 }
 
             }
