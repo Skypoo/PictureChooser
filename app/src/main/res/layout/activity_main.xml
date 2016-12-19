@@ -6,16 +6,35 @@
     android:orientation="vertical"
     >
 
-    <Button
-        android:id="@+id/chooser"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="選擇圖片"
-        />
+        android:orientation="horizontal"
+        >
+
+        <Button
+            android:id="@+id/chooser"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="選擇圖片"
+            android:layout_weight="1"
+            />
+
+        <Button
+            android:id="@+id/camera"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="使用相機"
+            android:layout_weight="1"
+            />
+
+    </LinearLayout>
+
+
 
     <ImageView
         android:id="@+id/imageView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         />
 </LinearLayout>
