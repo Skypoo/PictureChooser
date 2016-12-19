@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.os.Environment;
 import android.os.PersistableBundle;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -118,10 +119,16 @@ public class MainActivity extends AppCompatActivity {
 //        Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
 
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        tmpFile = new File(
-                Environment.getExternalStorageDirectory(),"image.jpg");
+//        tmpFile = new File(
+//                Environment.getExternalStorageDirectory(),"image.jpg");
+        File path = getExtermalStoragePublicDir("picturechooser");
+        Log.v("brad",path.toString());
+        tmpFile = new File(path.toString(),"image"+System.currentTimeMillis()+".jpg");
+        Log.v("brad",tmpFile.toString());
         tmpFileUri = Uri.fromFile(tmpFile);
+        Log.v("brad",tmpFileUri.toString());
         intent.putExtra(MediaStore.EXTRA_OUTPUT, tmpFileUri);
+
 
         startActivityForResult(intent,200);
         Log.v("brad",intent.toString());
@@ -164,7 +171,11 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case 200:
                         if (data !=null) {
-                            Bitmap bmp = (Bitmap)data.getExtras().get("data");
+                            Log.v("brad",tmpFile.getAbsolutePath().toString());
+
+                            Bitmap bmp = BitmapFactory.decodeFile(tmpFile.getAbsolutePath());
+
+//                            Bitmap bmp = (Bitmap)data.getExtras().get("data");
                             imageView.setImageBitmap(bmp);
 
 //                            Bitmap bmp = BitmapFactory.decodeFile(Environment.getExternalStorageDirectory()+ "/image.jpg");
@@ -173,7 +184,10 @@ public class MainActivity extends AppCompatActivity {
                             if(tmpFile.exists()){
                                 Log.v("brad",tmpFile.getAbsolutePath().toString());
 
-                                Bitmap bmp = BitmapFactory.decodeFile(Environment.getExternalStorageDirectory()+File.separator+"image.jpg");
+                                Bitmap bmp = BitmapFactory.decodeFile(tmpFile.getAbsolutePath());
+
+//                                Bitmap bmp = BitmapFactory.decodeFile(
+//                                        Environment.getExternalStorageDirectory()+File.separator+"image.jpg");
                                 imageView.setImageBitmap(bmp);
 //                                tmpFile.mkdir();
                             }else{
@@ -197,5 +211,16 @@ public class MainActivity extends AppCompatActivity {
 //                Toast.makeText(this,"無法找到檔案",Toast.LENGTH_LONG).show();
 //            }
         }
+    }
+
+    private File getExtermalStoragePublicDir(String albumName) {
+        File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        if(path.mkdir()){
+            File f = new File(path, albumName);
+            if(f.mkdir()){
+                return f;
+            }
+        }
+        return new File(path, albumName);
     }
 }
