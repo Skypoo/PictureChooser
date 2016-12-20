@@ -25,15 +25,14 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 
 public class MainActivity extends AppCompatActivity {
-
     Button picker,camera;
     private static final int REQUEST_EXTERNAL_STORAGE = 200;
     File tmpFile;
     ImageView imageView;
     Uri tmpFileUri;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,8 +41,6 @@ public class MainActivity extends AppCompatActivity {
         imageView = (ImageView) findViewById(R.id.imageView);
         camera = (Button)findViewById(R.id.camera);
         picker = (Button)findViewById(R.id.chooser);
-
-
 
         if (ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.CAMERA) !=
@@ -59,10 +56,7 @@ public class MainActivity extends AppCompatActivity {
                             Manifest.permission.CAMERA},
                     REQUEST_EXTERNAL_STORAGE);
         }
-        else
-        {
-
-        }
+        else {}
 
         camera.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -79,7 +73,6 @@ public class MainActivity extends AppCompatActivity {
                 Log.v("brad","initPictureChooser Click");
             }
         });
-
     }
 
     @Override
@@ -102,38 +95,35 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
-
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        if(newConfig.orientation==Configuration.ORIENTATION_LANDSCAPE){
-
-        }else{
-
-        }
+        if(newConfig.orientation==Configuration.ORIENTATION_LANDSCAPE){}
+        else{}
     }
 
     public void initCamera(){
         Log.v("brad","initCamera");
 //        Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 //        tmpFile = new File(
 //                Environment.getExternalStorageDirectory(),"image.jpg");
         File path = getExtermalStoragePublicDir("picturechooser");
         Log.v("brad",path.toString());
-        tmpFile = new File(path.toString(),"image"+System.currentTimeMillis()+".jpg");
+        if(!path.exists()){
+            path.mkdir();
+        }
+        tmpFile = new File(path,"image"+System.currentTimeMillis()+".jpg");
         Log.v("brad",tmpFile.toString());
         tmpFileUri = Uri.fromFile(tmpFile);
         Log.v("brad",tmpFileUri.toString());
         intent.putExtra(MediaStore.EXTRA_OUTPUT, tmpFileUri);
-
-
         startActivityForResult(intent,200);
-        Log.v("brad",intent.toString());
-    }
+        Log.v("brad","intent:"+intent.toString());
+//      相片即時更新
 
+//      相片即時更新
+    }
 
     public void initPictureChooser (){
         Log.v("brad","initPictureChooser");
@@ -143,7 +133,6 @@ public class MainActivity extends AppCompatActivity {
                 Intent desIntent = Intent.createChooser(picker,null);
                 startActivityForResult(desIntent,100);
     }
-
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -164,28 +153,27 @@ public class MainActivity extends AppCompatActivity {
                                 Log.v("brad", e.toString());
                             }
                         }
-
                         else{
                             Toast.makeText(this,"無法找到檔案",Toast.LENGTH_LONG).show();
                         }
                         break;
                     case 200:
                         if (data !=null) {
-                            Log.v("brad",tmpFile.getAbsolutePath().toString());
-
-                            Bitmap bmp = BitmapFactory.decodeFile(tmpFile.getAbsolutePath());
-
-//                            Bitmap bmp = (Bitmap)data.getExtras().get("data");
-                            imageView.setImageBitmap(bmp);
-
-//                            Bitmap bmp = BitmapFactory.decodeFile(Environment.getExternalStorageDirectory()+ "/image.jpg");
+                            Log.v("brad","data!=null:"+tmpFile.getAbsolutePath().toString());
+//                            Bitmap bmp = BitmapFactory.decodeFile(tmpFile.getAbsolutePath());
+////                            Bitmap bmp = (Bitmap)data.getExtras().get("data");
 //                            imageView.setImageBitmap(bmp);
+////                            Bitmap bmp = BitmapFactory.decodeFile(Environment.getExternalStorageDirectory()+ "/image.jpg");
+////                            imageView.setImageBitmap(bmp);
                         }else{
                             if(tmpFile.exists()){
+                                Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                                File f = new File(tmpFile.toString());
+                                Uri contentUri = Uri.fromFile(f);
+                                mediaScanIntent.setData(contentUri);
+                                this.sendBroadcast(mediaScanIntent);
                                 Log.v("brad",tmpFile.getAbsolutePath().toString());
-
                                 Bitmap bmp = BitmapFactory.decodeFile(tmpFile.getAbsolutePath());
-
 //                                Bitmap bmp = BitmapFactory.decodeFile(
 //                                        Environment.getExternalStorageDirectory()+File.separator+"image.jpg");
                                 imageView.setImageBitmap(bmp);
