@@ -1,16 +1,25 @@
 package tw.org.iii.picturechooser;
 
 import android.Manifest;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.ContentResolver;
+import android.content.ContentUris;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.os.PersistableBundle;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
@@ -23,16 +32,22 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
-    Button picker,camera;
+    Button picker,camera,grey1;
     private static final int REQUEST_EXTERNAL_STORAGE = 200;
-    File tmpFile;
+    File tmpFile,chooserFile,path;
     ImageView imageView;
-    Uri tmpFileUri;
+    Uri tmpFileUri,chooserFileUri;
+    Bitmap bmp;
+    int grey;
+    UIHandler uiHandler;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,6 +56,8 @@ public class MainActivity extends AppCompatActivity {
         imageView = (ImageView) findViewById(R.id.imageView);
         camera = (Button)findViewById(R.id.camera);
         picker = (Button)findViewById(R.id.chooser);
+        grey1 = (Button)findViewById(R.id.grey);
+        uiHandler = new UIHandler();
 
         if (ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.CAMERA) !=
@@ -71,6 +88,18 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 initPictureChooser();
                 Log.v("brad","initPictureChooser Click");
+            }
+        });
+
+        grey1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.v("brad","灰階onClick");
+                MyThread mt1 = new MyThread();
+                mt1.start();
+
+
+                //imageView.setImageBitmap(greyImg(bmp));
             }
         });
     }
@@ -127,15 +156,32 @@ public class MainActivity extends AppCompatActivity {
 
     public void initPictureChooser (){
         Log.v("brad","initPictureChooser");
-                Intent picker = new Intent(Intent.ACTION_GET_CONTENT);
-                picker.setType("image/*");
-                picker.putExtra(Intent.EXTRA_LOCAL_ONLY,true);
-                Intent desIntent = Intent.createChooser(picker,null);
-                startActivityForResult(desIntent,100);
+        Intent picker = new Intent(Intent.ACTION_GET_CONTENT);
+        picker.setType("image/*");
+        picker.putExtra(Intent.EXTRA_LOCAL_ONLY,true);
+        //裁切照片-----------------------------------------------
+//        picker.putExtra("crop",true);
+//        picker.putExtra("aspectX",1);
+//        picker.putExtra("aspectY",1);
+//        picker.putExtra("return-data", false);
+//        File path = getExtermalStoragePublicDir("picturechooser");
+//        Log.v("brad",path.toString());
+//        if(!path.exists()){
+//            path.mkdir();
+//        }
+//        chooserFile = new File(path,"image"+System.currentTimeMillis()+".jpg");
+//        chooserFileUri = Uri.fromFile(chooserFile);
+//        picker.putExtra(MediaStore.EXTRA_OUTPUT, chooserFileUri);
+//        picker.putExtra("output",chooserFileUri);
+//        picker.putExtra("outputFormat", "JPEG");
+        //照片裁切-----------------------------------------------
+        Intent desIntent = Intent.createChooser(picker,null);
+        startActivityForResult(desIntent,100);
     }
 
+
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if(resultCode == Activity.RESULT_OK){
             Log.v("brad","RESULT_OK");
@@ -145,17 +191,31 @@ public class MainActivity extends AppCompatActivity {
                         Log.v("brad","case 100");
                         if (data !=null) {
                             Uri uri = data.getData();
-                            ContentResolver cr = this.getContentResolver();
-                            try {
-                                Bitmap bitmap = BitmapFactory.decodeStream(cr.openInputStream(uri));
-                                imageView.setImageBitmap(bitmap);
-                            } catch (Exception e) {
-                                Log.v("brad", e.toString());
-                            }
+                            String path = getPath(MainActivity.this, uri);
+                            CropDialog mCropDialog = new CropDialog(MainActivity.this, path);
+                            mCropDialog.show();
+                            mCropDialog.setOnCropFinishListener(new CropDialog.OnCropFinishListener() {
+                                @Override
+                                public void onCrop(String path) {
+                                    bmp = BitmapFactory.decodeFile(path);
+                                    imageView.setImageBitmap(bmp);
+                                }
+                            });
+
+//                            ContentResolver cr = this.getContentResolver();
+//                            try {
+//                                Bitmap bitmap = BitmapFactory.decodeStream(cr.openInputStream(uri));
+//                                imageView.setImageBitmap(bitmap);
+//                            } catch (Exception e) {
+//                                Log.v("brad", e.toString());
+//                            }
                         }
+
                         else{
+                            Log.v("brad","data =null");
                             Toast.makeText(this,"無法找到檔案",Toast.LENGTH_LONG).show();
                         }
+
                         break;
                     case 200:
                         if (data !=null) {
@@ -167,17 +227,31 @@ public class MainActivity extends AppCompatActivity {
 ////                            imageView.setImageBitmap(bmp);
                         }else{
                             if(tmpFile.exists()){
+                                //更新相片資料到外部儲存裝置上
                                 Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
                                 File f = new File(tmpFile.toString());
                                 Uri contentUri = Uri.fromFile(f);
                                 mediaScanIntent.setData(contentUri);
                                 this.sendBroadcast(mediaScanIntent);
-                                Log.v("brad",tmpFile.getAbsolutePath().toString());
-                                Bitmap bmp = BitmapFactory.decodeFile(tmpFile.getAbsolutePath());
-//                                Bitmap bmp = BitmapFactory.decodeFile(
-//                                        Environment.getExternalStorageDirectory()+File.separator+"image.jpg");
-                                imageView.setImageBitmap(bmp);
-//                                tmpFile.mkdir();
+                                //更新相片資料到外部儲存裝置上
+
+                                String path = getPath(MainActivity.this, tmpFileUri);
+//                                String path = tmpFile.getAbsolutePath();
+                                CropDialog mCropDialog = new CropDialog(MainActivity.this, path);
+                                mCropDialog.show();
+
+                                mCropDialog.setOnCropFinishListener(new CropDialog.OnCropFinishListener() {
+                                    @Override
+                                    public void onCrop(String path) {
+                                        bmp = BitmapFactory.decodeFile(path);
+                                        imageView.setImageBitmap(bmp);
+                                    }
+                                });
+
+
+
+//                                Bitmap bmp = BitmapFactory.decodeFile(tmpFile.getAbsolutePath());
+//                                imageView.setImageBitmap(bmp);
                             }else{
                                 Toast.makeText(this,"無法找到檔案",Toast.LENGTH_LONG).show();
                             }
@@ -211,4 +285,252 @@ public class MainActivity extends AppCompatActivity {
         }
         return new File(path, albumName);
     }
+
+    private File getExtermalStoragePublicDownLoadsDir(String albumName) {
+        File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        if(path.mkdir()){
+            File f = new File(path, albumName);
+            if(f.mkdir()){
+                return f;
+            }
+        }
+        return new File(path, albumName);
+    }
+
+    /**
+     * Get a file path from a Uri. This will get the the path for Storage Access
+     * Framework Documents, as well as the _data field for the MediaStore and
+     * other file-based ContentProviders.
+     *
+     * @param context The context.
+     * @param uri The Uri to query.
+     * @author paulburke
+     */
+    @TargetApi(Build.VERSION_CODES.KITKAT)
+    public static String getPath(final Context context, final Uri uri) {
+
+        final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
+
+        // DocumentProvider
+        if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
+            // ExternalStorageProvider
+            if (isExternalStorageDocument(uri)) {
+                final String docId = DocumentsContract.getDocumentId(uri);
+                final String[] split = docId.split(":");
+                final String type = split[0];
+
+                if ("primary".equalsIgnoreCase(type)) {
+                    return Environment.getExternalStorageDirectory() + "/" + split[1];
+                }
+
+                // TODO handle non-primary volumes
+            }
+            // DownloadsProvider
+            else if (isDownloadsDocument(uri)) {
+
+                final String id = DocumentsContract.getDocumentId(uri);
+                final Uri contentUri = ContentUris.withAppendedId(
+                        Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
+
+                return getDataColumn(context, contentUri, null, null);
+            }
+            // MediaProvider
+            else if (isMediaDocument(uri)) {
+                final String docId = DocumentsContract.getDocumentId(uri);
+                final String[] split = docId.split(":");
+                final String type = split[0];
+
+                Uri contentUri = null;
+                if ("image".equals(type)) {
+                    contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                } else if ("video".equals(type)) {
+                    contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+                } else if ("audio".equals(type)) {
+                    contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+                }
+
+                final String selection = "_id=?";
+                final String[] selectionArgs = new String[] {
+                        split[1]
+                };
+
+                return getDataColumn(context, contentUri, selection, selectionArgs);
+            }
+        }
+        // MediaStore (and general)
+        else if ("content".equalsIgnoreCase(uri.getScheme())) {
+            return getDataColumn(context, uri, null, null);
+        }
+        // File
+        else if ("file".equalsIgnoreCase(uri.getScheme())) {
+            return uri.getPath();
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the value of the data column for this Uri. This is useful for
+     * MediaStore Uris, and other file-based ContentProviders.
+     *
+     * @param context The context.
+     * @param uri The Uri to query.
+     * @param selection (Optional) Filter used in the query.
+     * @param selectionArgs (Optional) Selection arguments used in the query.
+     * @return The value of the _data column, which is typically a file path.
+     */
+    public static String getDataColumn(Context context, Uri uri, String selection,
+                                       String[] selectionArgs) {
+
+        Cursor cursor = null;
+        final String column = "_data";
+        final String[] projection = {
+                column
+        };
+
+        try {
+            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs,
+                    null);
+            if (cursor != null && cursor.moveToFirst()) {
+                final int column_index = cursor.getColumnIndexOrThrow(column);
+                return cursor.getString(column_index);
+            }
+        } finally {
+            if (cursor != null)
+                cursor.close();
+        }
+        return null;
+    }
+
+
+    /**
+     * @param uri The Uri to check.
+     * @return Whether the Uri authority is ExternalStorageProvider.
+     */
+    public static boolean isExternalStorageDocument(Uri uri) {
+        return "com.android.externalstorage.documents".equals(uri.getAuthority());
+    }
+
+    /**
+     * @param uri The Uri to check.
+     * @return Whether the Uri authority is DownloadsProvider.
+     */
+    public static boolean isDownloadsDocument(Uri uri) {
+        return "com.android.providers.downloads.documents".equals(uri.getAuthority());
+    }
+
+    /**
+     * @param uri The Uri to check.
+     * @return Whether the Uri authority is MediaProvider.
+     */
+    public static boolean isMediaDocument(Uri uri) {
+        return "com.android.providers.media.documents".equals(uri.getAuthority());
+    }
+
+
+
+    //-----------------------------------------------------------
+
+    private class MyThread extends Thread{
+        @Override
+        public void run() {
+
+            Message mesg = new Message();
+            Bundle data = new Bundle();
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            greyImg(bmp).compress(Bitmap.CompressFormat.JPEG,100,stream);
+            byte[] bytes = stream.toByteArray();
+            Log.v("brad","bmp轉byte");
+
+            data.putByteArray("bmp", bytes);
+            mesg.setData(data);
+            uiHandler.sendMessage(mesg);
+        }
+    }
+
+    private class UIHandler extends Handler{
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+
+            Bundle data = msg.getData();
+            byte[] bytes = data.getByteArray("bmp");
+            bmp = BitmapFactory.decodeByteArray(bytes,0,bytes.length);
+            Log.v("brad","byte轉bmp");
+            imageView.setImageBitmap(bmp);
+
+        }
+    }
+
+    public Bitmap greyImg(Bitmap img){
+        File path = getExtermalStoragePublicDownLoadsDir("picturechooser");
+        Log.v("brad","greyImg:"+path.toString());
+        if(!path.exists()){
+            path.mkdir();
+        }
+        String gCodeName = "gcode.txt";
+        File gCodeFile = new File(path,gCodeName);
+        Log.v("brad","gCodeFile:"+gCodeFile.toString());
+
+
+        int width = img.getWidth();
+        //int width = 600;
+        int height = img.getHeight();
+        //int height = 300;
+        int pixels[] = new int[width*height];
+        img.getPixels(pixels, 0, width, 0, 0, width, height);
+        int alpha = 0xFF <<24;
+        try {
+            FileOutputStream output = new FileOutputStream(gCodeFile,true);
+
+        for(int i = 0; i < height; i++)
+            for (int j = 0; j < width; j++) {
+                grey = pixels[width * i + j];
+                int red = ((grey & 0x00FF0000) >> 16);
+                int green = ((grey & 0x0000FF00) >> 8);
+                int blue = (grey & 0x000000FF);
+                grey = (int) ((float) red * 0.3 + (float) green * 0.59 + (float) blue * 0.11);
+
+
+                float fGrey = grey;
+                float elevationScale = (fGrey / 255) * 5;
+                float elevation = (float) (Math.round(elevationScale * 100)) / 100;
+
+                String x = Integer.toString(j);
+                String y = Integer.toString(i);
+                String z = Float.toString(elevation);
+
+                try {
+//                    FileOutputStream outputStream = openFileOutput(gCodeName, MODE_APPEND);
+                    output.write("x".getBytes());
+                    output.write(x.getBytes());
+                    output.write(" ".getBytes());
+                    output.write("y".getBytes());
+                    output.write(y.getBytes());
+                    output.write(" ".getBytes());
+                    output.write("z".getBytes());
+                    output.write(z.getBytes());
+                    output.write("\n".getBytes());
+                    output.flush();
+                    output.close();
+                } catch (Exception e) {
+                    Log.v("brad",e.toString());
+                }
+
+                grey = alpha | (grey << 16) | (grey << 8) | grey;
+                pixels[width * i + j] = grey;
+            }
+        } catch (Exception e) {
+            e.toString();
+        }
+
+        Bitmap result = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+        result.setPixels(pixels, 0, width, 0, 0, width, height);
+        return result;
+
+
+
+    }
+    //-----------------------------------------------------------
+
 }
