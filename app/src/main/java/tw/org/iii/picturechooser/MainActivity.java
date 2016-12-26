@@ -468,7 +468,7 @@ public class MainActivity extends AppCompatActivity {
         if(!path.exists()){
             path.mkdir();
         }
-        String gCodeName = "gcode.txt";
+        String gCodeName = "gcode"+System.currentTimeMillis()+".txt";
         File gCodeFile = new File(path,gCodeName);
         Log.v("brad","gCodeFile:"+gCodeFile.toString());
 
@@ -484,7 +484,7 @@ public class MainActivity extends AppCompatActivity {
             FileOutputStream output = new FileOutputStream(gCodeFile,true);
 
 
-        for(int i = 0; i < height; i++)
+        for(int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
                 grey = pixels[width * i + j];
                 int red = ((grey & 0x00FF0000) >> 16);
@@ -511,16 +511,17 @@ public class MainActivity extends AppCompatActivity {
                     output.write(" ".getBytes());
                     output.write("z".getBytes());
                     output.write(z.getBytes());
-                    output.write("\n".getBytes());
+                    output.write("\r\n".getBytes());
                     output.flush();
 
                 } catch (Exception e) {
-                    Log.v("brad",e.toString());
+                    Log.v("brad", e.toString());
                 }
 
                 grey = alpha | (grey << 16) | (grey << 8) | grey;
                 pixels[width * i + j] = grey;
             }
+        }
             output.close();
         } catch (Exception e) {
             e.toString();
