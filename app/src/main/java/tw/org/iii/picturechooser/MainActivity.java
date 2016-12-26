@@ -483,6 +483,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             FileOutputStream output = new FileOutputStream(gCodeFile,true);
 
+
         for(int i = 0; i < height; i++)
             for (int j = 0; j < width; j++) {
                 grey = pixels[width * i + j];
@@ -512,7 +513,7 @@ public class MainActivity extends AppCompatActivity {
                     output.write(z.getBytes());
                     output.write("\n".getBytes());
                     output.flush();
-                    output.close();
+
                 } catch (Exception e) {
                     Log.v("brad",e.toString());
                 }
@@ -520,6 +521,7 @@ public class MainActivity extends AppCompatActivity {
                 grey = alpha | (grey << 16) | (grey << 8) | grey;
                 pixels[width * i + j] = grey;
             }
+            output.close();
         } catch (Exception e) {
             e.toString();
         }
