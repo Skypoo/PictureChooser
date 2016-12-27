@@ -37,9 +37,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-    Button picker,camera,grey1;
+    Button picker,camera,grey1,test;
     private static final int REQUEST_EXTERNAL_STORAGE = 200;
     File tmpFile,chooserFile,path;
     ImageView imageView;
@@ -47,6 +49,9 @@ public class MainActivity extends AppCompatActivity {
     Bitmap bmp;
     int grey;
     UIHandler uiHandler;
+    Info info;
+    List<Object> list = new LinkedList<>();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +63,8 @@ public class MainActivity extends AppCompatActivity {
         picker = (Button)findViewById(R.id.chooser);
         grey1 = (Button)findViewById(R.id.grey);
         uiHandler = new UIHandler();
+        test = (Button)findViewById(R.id.test);
+
 
         if (ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.CAMERA) !=
@@ -100,6 +107,14 @@ public class MainActivity extends AppCompatActivity {
 
 
                 //imageView.setImageBitmap(greyImg(bmp));
+            }
+        });
+
+        test.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                GcodeThread gt1 = new GcodeThread();
+                gt1.start();
             }
         });
     }
@@ -448,6 +463,61 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private class GcodeThread extends Thread{
+        @Override
+        public void run() {
+
+        File path = getExtermalStoragePublicDownLoadsDir("picturechooser");
+        Log.v("brad","greyImg:"+path.toString());
+        if(!path.exists()){
+            path.mkdir();
+        }
+        String gCodeName = "gcode"+System.currentTimeMillis()+".txt";
+        File gCodeFile = new File(path,gCodeName);
+        Log.v("brad","gCodeFile:"+gCodeFile.toString());
+
+        try {
+            FileOutputStream output = new FileOutputStream(gCodeFile,true);
+
+
+            for(int i=0; i<= list.size();i++){
+                try {
+                    Info getinfo =(Info) list.get(i);
+                    String x = getinfo.getX();
+                    Log.v("brad",x);
+                    String y = getinfo.getY();
+                    Log.v("brad",y);
+                    String z = getinfo.getZ();
+                    Log.v("brad",z);
+                    output.write("x".getBytes());
+                    output.write(x.getBytes());
+                    output.write(" ".getBytes());
+                    output.write("y".getBytes());
+                    output.write(y.getBytes());
+                    output.write(" ".getBytes());
+                    output.write("z".getBytes());
+                    output.write(z.getBytes());
+                    output.write("\r\n".getBytes());
+                    output.flush();
+
+                } catch (Exception e) {
+                    Log.v("brad", e.toString());
+                }
+            }
+            output.close();
+        } catch (Exception e) {
+            Log.v("brad",e.toString());
+        }
+//        Info getinfo =(Info) list.get(0);
+//        String x = getinfo.getX();
+//        Log.v("brad",x);
+//        String y = getinfo.getY();
+//        Log.v("brad",y);
+//        String z = getinfo.getZ();
+//        Log.v("brad",z);
+        }
+    }
+
     private class UIHandler extends Handler{
         @Override
         public void handleMessage(Message msg) {
@@ -463,14 +533,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public Bitmap greyImg(Bitmap img){
-        File path = getExtermalStoragePublicDownLoadsDir("picturechooser");
-        Log.v("brad","greyImg:"+path.toString());
-        if(!path.exists()){
-            path.mkdir();
-        }
-        String gCodeName = "gcode"+System.currentTimeMillis()+".txt";
-        File gCodeFile = new File(path,gCodeName);
-        Log.v("brad","gCodeFile:"+gCodeFile.toString());
+
+//-----------------------寫gcode.txt檔案------------------------------
+//        File path = getExtermalStoragePublicDownLoadsDir("picturechooser");
+//        Log.v("brad","greyImg:"+path.toString());
+//        if(!path.exists()){
+//            path.mkdir();
+//        }
+//        String gCodeName = "gcode"+System.currentTimeMillis()+".txt";
+//        File gCodeFile = new File(path,gCodeName);
+//        Log.v("brad","gCodeFile:"+gCodeFile.toString());
+//-----------------------寫gcode.txt檔案------------------------------
 
 
         int width = img.getWidth();
@@ -480,12 +553,18 @@ public class MainActivity extends AppCompatActivity {
         int pixels[] = new int[width*height];
         img.getPixels(pixels, 0, width, 0, 0, width, height);
         int alpha = 0xFF <<24;
-        try {
-            FileOutputStream output = new FileOutputStream(gCodeFile,true);
 
+//-----------------------寫gcode.txt檔案------------------------------
+//        try {
+//            FileOutputStream output = new FileOutputStream(gCodeFile,true);
+//-----------------------寫gcode.txt檔案------------------------------
 
         for(int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
+                if (i % 2 ==1){
+                    j=width-j;
+                }
+
                 grey = pixels[width * i + j];
                 int red = ((grey & 0x00FF0000) >> 16);
                 int green = ((grey & 0x0000FF00) >> 8);
@@ -496,44 +575,89 @@ public class MainActivity extends AppCompatActivity {
                 float fGrey = grey;
                 float elevationScale = (fGrey / 255) * 5;
                 float elevation = (float) (Math.round(elevationScale * 100)) / 100;
-
+                Log.v("brad", "準備寫檔");
                 String x = Integer.toString(j);
                 String y = Integer.toString(i);
                 String z = Float.toString(elevation);
 
-                try {
-//                    FileOutputStream outputStream = openFileOutput(gCodeName, MODE_APPEND);
-                    output.write("x".getBytes());
-                    output.write(x.getBytes());
-                    output.write(" ".getBytes());
-                    output.write("y".getBytes());
-                    output.write(y.getBytes());
-                    output.write(" ".getBytes());
-                    output.write("z".getBytes());
-                    output.write(z.getBytes());
-                    output.write("\r\n".getBytes());
-                    output.flush();
+                info = new Info();
+                info.setX(x);
+                info.setY(y);
+                info.setZ(z);
+                list.add(info);
 
-                } catch (Exception e) {
-                    Log.v("brad", e.toString());
-                }
+//-----------------------寫gcode.txt檔案------------------------------
+//                try {
+//                    output.write("x".getBytes());
+//                    output.write(x.getBytes());
+//                    output.write(" ".getBytes());
+//                    output.write("y".getBytes());
+//                    output.write(y.getBytes());
+//                    output.write(" ".getBytes());
+//                    output.write("z".getBytes());
+//                    output.write(z.getBytes());
+//                    output.write("\r\n".getBytes());
+//                    output.flush();
+//
+//                } catch (Exception e) {
+//                    Log.v("brad", e.toString());
+//                }
+//-----------------------寫gcode.txt檔案------------------------------
 
                 grey = alpha | (grey << 16) | (grey << 8) | grey;
                 pixels[width * i + j] = grey;
             }
         }
-            output.close();
-        } catch (Exception e) {
-            e.toString();
-        }
+
+//-----------------------寫gcode.txt檔案------------------------------
+//            output.close();
+//        } catch (Exception e) {
+//            e.toString();
+//        }
+//-----------------------寫gcode.txt檔案------------------------------
+
 
         Bitmap result = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
         result.setPixels(pixels, 0, width, 0, 0, width, height);
         return result;
 
-
-
     }
     //-----------------------------------------------------------
+
+    //-----------------------自訂類別----------------------------
+//    public class Info {
+//        public String x;
+//        public String y;
+//        public String z;
+//        int gray;
+//        public void setX(String x) {
+//            this.x = x;
+//        }
+//        public void setY(String y) {
+//            this.y = y;
+//        }
+//        public void setZ(String z) {
+//            this.z = z;
+//        }
+//        public void setGray(int gray) {
+//            this.gray = gray;
+//        }
+//        public String getX() {
+//            return x;
+//        }
+//        public String getY() {
+//            return y;
+//        }
+//        public String getZ() {
+//            return z;
+//        }
+//        public int getGray() {
+//            return gray;
+//        }
+//    }
+
+
+    //-----------------------自訂類別----------------------------
+
 
 }

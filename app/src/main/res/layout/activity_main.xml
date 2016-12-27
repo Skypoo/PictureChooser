@@ -29,10 +29,18 @@
             />
 
         <Button
-            android:id="@+id/grey"
+        android:id="@+id/grey"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="轉灰階"
+        android:layout_weight="1"
+        />
+
+        <Button
+            android:id="@+id/test"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="轉灰階"
+            android:text="test"
             android:layout_weight="1"
             />
 
