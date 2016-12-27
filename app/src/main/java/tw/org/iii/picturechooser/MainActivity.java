@@ -554,6 +554,8 @@ public class MainActivity extends AppCompatActivity {
         img.getPixels(pixels, 0, width, 0, 0, width, height);
         int alpha = 0xFF <<24;
 
+        int k;
+
 //-----------------------寫gcode.txt檔案------------------------------
 //        try {
 //            FileOutputStream output = new FileOutputStream(gCodeFile,true);
@@ -562,10 +564,12 @@ public class MainActivity extends AppCompatActivity {
         for(int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
                 if (i % 2 ==1){
-                    j=width-j;
+                    k = width-j;
+                }else{
+                    k = j;
                 }
 
-                grey = pixels[width * i + j];
+                grey = pixels[width * i + k];
                 int red = ((grey & 0x00FF0000) >> 16);
                 int green = ((grey & 0x0000FF00) >> 8);
                 int blue = (grey & 0x000000FF);
@@ -576,7 +580,7 @@ public class MainActivity extends AppCompatActivity {
                 float elevationScale = (fGrey / 255) * 5;
                 float elevation = (float) (Math.round(elevationScale * 100)) / 100;
                 Log.v("brad", "準備寫檔");
-                String x = Integer.toString(j);
+                String x = Integer.toString(k);
                 String y = Integer.toString(i);
                 String z = Float.toString(elevation);
 
@@ -605,7 +609,7 @@ public class MainActivity extends AppCompatActivity {
 //-----------------------寫gcode.txt檔案------------------------------
 
                 grey = alpha | (grey << 16) | (grey << 8) | grey;
-                pixels[width * i + j] = grey;
+                pixels[width * i + k] = grey;
             }
         }
 
