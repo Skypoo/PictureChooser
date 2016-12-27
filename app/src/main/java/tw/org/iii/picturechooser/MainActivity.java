@@ -484,20 +484,21 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     Info getinfo =(Info) list.get(i);
                     String x = getinfo.getX();
-                    Log.v("brad",x);
                     String y = getinfo.getY();
-                    Log.v("brad",y);
                     String z = getinfo.getZ();
-                    Log.v("brad",z);
                     output.write("x".getBytes());
                     output.write(x.getBytes());
-                    output.write(" ".getBytes());
-                    output.write("y".getBytes());
+                    output.write(" y".getBytes());
+//                    output.write("y".getBytes());
                     output.write(y.getBytes());
-                    output.write(" ".getBytes());
-                    output.write("z".getBytes());
+                    output.write(" z".getBytes());
+//                    output.write("z".getBytes());
                     output.write(z.getBytes());
                     output.write("\r\n".getBytes());
+
+//                    String coordinate ="x"+getinfo.getX()+" y"+getinfo.getY()+" z"+getinfo.getZ();
+//                    output.write(coordinate.getBytes());
+//                    output.write("\r\n".getBytes());
                     output.flush();
 
                 } catch (Exception e) {
@@ -508,6 +509,7 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             Log.v("brad",e.toString());
         }
+
 //        Info getinfo =(Info) list.get(0);
 //        String x = getinfo.getX();
 //        Log.v("brad",x);
@@ -564,9 +566,8 @@ public class MainActivity extends AppCompatActivity {
         for(int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
 
-
                 if (i % 2 ==1){
-                    k = width-j;
+                    k = width-j-1;
                 }else{
                     k = j;
                 }
