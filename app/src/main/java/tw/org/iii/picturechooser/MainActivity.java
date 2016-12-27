@@ -553,8 +553,8 @@ public class MainActivity extends AppCompatActivity {
         int pixels[] = new int[width*height];
         img.getPixels(pixels, 0, width, 0, 0, width, height);
         int alpha = 0xFF <<24;
-
         int k;
+
 
 //-----------------------寫gcode.txt檔案------------------------------
 //        try {
@@ -563,6 +563,8 @@ public class MainActivity extends AppCompatActivity {
 
         for(int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
+
+
                 if (i % 2 ==1){
                     k = width-j;
                 }else{
@@ -579,7 +581,7 @@ public class MainActivity extends AppCompatActivity {
                 float fGrey = grey;
                 float elevationScale = (fGrey / 255) * 5;
                 float elevation = (float) (Math.round(elevationScale * 100)) / 100;
-                Log.v("brad", "準備寫檔");
+//                Log.v("brad", "準備寫檔");
                 String x = Integer.toString(k);
                 String y = Integer.toString(i);
                 String z = Float.toString(elevation);
