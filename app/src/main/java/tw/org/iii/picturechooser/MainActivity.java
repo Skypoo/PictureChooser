@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -50,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
     int grey;
     UIHandler uiHandler;
     Info info;
-    List<Object> list = new LinkedList<>();
+    ArrayList<Object> list = new ArrayList<>();
 
 
     @Override
