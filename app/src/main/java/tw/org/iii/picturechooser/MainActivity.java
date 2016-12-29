@@ -428,7 +428,7 @@ public class MainActivity extends AppCompatActivity {
             path.mkdir();
         }
         String gCodeName = "gcode"+System.currentTimeMillis()+".txt";
-        File gCodeFile = new File(path,gCodeName);
+        final File gCodeFile = new File(path,gCodeName);
         Log.v("brad","gCodeFile:"+gCodeFile.toString());
         long StartTime = System.nanoTime();
         try {
@@ -460,6 +460,11 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     Toast.makeText(MainActivity.this, "檔案完成，共花了"+ finTimes+"秒", Toast.LENGTH_LONG).show();
+                    Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                    File f = new File(gCodeFile.toString());
+                    Uri contentUri = Uri.fromFile(f);
+                    mediaScanIntent.setData(contentUri);
+                    MainActivity.this.sendBroadcast(mediaScanIntent);
                 }
             });
         }
