@@ -433,11 +433,11 @@ public class MainActivity extends AppCompatActivity {
         long StartTime = System.nanoTime();
         try {
             FileOutputStream output = new FileOutputStream(gCodeFile,true);
-            for(int i=0; i<= list.size();i++){
+            FileWriter fw = new FileWriter(gCodeFile);
+            BufferedWriter bw = new BufferedWriter(fw);
+            for(int i=0; i< list.size();i++){
                 try {
                     Info getinfo =list.get(i);
-                    FileWriter fw = new FileWriter(gCodeFile);
-                    BufferedWriter bw = new BufferedWriter(fw);
                     bw.write(("x" + getinfo.getX() + " y" + getinfo.getY() + " z" + getinfo.getZ() + "\r\n"));
 
 //                    Info getinfo =list.get(i);
@@ -453,12 +453,13 @@ public class MainActivity extends AppCompatActivity {
             }
             long EndTime = System.nanoTime();
             final long execTimeMs = (EndTime - StartTime) / 1000000;
+            final long finTimes = execTimeMs/100;
             Log.v("brad","total cost time(ms): " + execTimeMs);
             Log.v("brad","output finished");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(MainActivity.this, "檔案完成，共花了"+ execTimeMs+"秒", Toast.LENGTH_LONG).show();
+                    Toast.makeText(MainActivity.this, "檔案完成，共花了"+ finTimes+"秒", Toast.LENGTH_LONG).show();
                 }
             });
         }
