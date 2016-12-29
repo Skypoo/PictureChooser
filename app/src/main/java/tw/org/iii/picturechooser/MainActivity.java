@@ -32,10 +32,12 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -51,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
     int grey;
     UIHandler uiHandler;
     Info info;
-    ArrayList<Object> list = new ArrayList<>();
+    ArrayList<Info> list = new ArrayList<>();
 
 
     @Override
@@ -65,6 +67,8 @@ public class MainActivity extends AppCompatActivity {
         grey1 = (Button)findViewById(R.id.grey);
         uiHandler = new UIHandler();
         test = (Button)findViewById(R.id.test);
+        grey1.setEnabled(false);
+        test.setEnabled(false);
 
 
         if (ActivityCompat.checkSelfPermission(this,
@@ -88,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Log.v("brad","initCamera Click");
                 initCamera();
+                grey1.setEnabled(true);
             }
         });
 
@@ -95,6 +100,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 initPictureChooser();
+                grey1.setEnabled(true);
                 Log.v("brad","initPictureChooser Click");
             }
         });
@@ -105,9 +111,8 @@ public class MainActivity extends AppCompatActivity {
                 Log.v("brad","灰階onClick");
                 MyThread mt1 = new MyThread();
                 mt1.start();
-
-
-                //imageView.setImageBitmap(greyImg(bmp));
+                test.setEnabled(true);
+                grey1.setEnabled(false);
             }
         });
 
@@ -116,6 +121,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 GcodeThread gt1 = new GcodeThread();
                 gt1.start();
+                test.setEnabled(false);
             }
         });
     }
@@ -150,9 +156,9 @@ public class MainActivity extends AppCompatActivity {
     public void initCamera(){
         Log.v("brad","initCamera");
 //        Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 //        tmpFile = new File(
 //                Environment.getExternalStorageDirectory(),"image.jpg");
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         File path = getExtermalStoragePublicDir("picturechooser");
         Log.v("brad",path.toString());
         if(!path.exists()){
@@ -165,9 +171,6 @@ public class MainActivity extends AppCompatActivity {
         intent.putExtra(MediaStore.EXTRA_OUTPUT, tmpFileUri);
         startActivityForResult(intent,200);
         Log.v("brad","intent:"+intent.toString());
-//      相片即時更新
-
-//      相片即時更新
     }
 
     public void initPictureChooser (){
@@ -175,22 +178,6 @@ public class MainActivity extends AppCompatActivity {
         Intent picker = new Intent(Intent.ACTION_GET_CONTENT);
         picker.setType("image/*");
         picker.putExtra(Intent.EXTRA_LOCAL_ONLY,true);
-        //裁切照片-----------------------------------------------
-//        picker.putExtra("crop",true);
-//        picker.putExtra("aspectX",1);
-//        picker.putExtra("aspectY",1);
-//        picker.putExtra("return-data", false);
-//        File path = getExtermalStoragePublicDir("picturechooser");
-//        Log.v("brad",path.toString());
-//        if(!path.exists()){
-//            path.mkdir();
-//        }
-//        chooserFile = new File(path,"image"+System.currentTimeMillis()+".jpg");
-//        chooserFileUri = Uri.fromFile(chooserFile);
-//        picker.putExtra(MediaStore.EXTRA_OUTPUT, chooserFileUri);
-//        picker.putExtra("output",chooserFileUri);
-//        picker.putExtra("outputFormat", "JPEG");
-        //照片裁切-----------------------------------------------
         Intent desIntent = Intent.createChooser(picker,null);
         startActivityForResult(desIntent,100);
     }
@@ -199,15 +186,46 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(resultCode == Activity.RESULT_OK){
-            Log.v("brad","RESULT_OK");
-//            if (data !=null) {
-                switch (requestCode){
-                    case 100:
-                        Log.v("brad","case 100");
-                        if (data !=null) {
-                            Uri uri = data.getData();
-                            String path = getPath(MainActivity.this, uri);
+        switch (requestCode){
+            case 100:
+                Log.v("brad","case 100");
+                if (data !=null) {
+                    Uri uri = data.getData();
+                    String path = getPath(MainActivity.this, uri);
+                    CropDialog mCropDialog = new CropDialog(MainActivity.this, path);
+                    mCropDialog.show();
+                    mCropDialog.setOnCropFinishListener(new CropDialog.OnCropFinishListener() {
+                        @Override
+                        public void onCrop(String path) {
+                            bmp = BitmapFactory.decodeFile(path);
+                            imageView.setImageBitmap(bmp);
+                        }
+                    });
+                }
+                else{
+                    Log.v("brad","data =null");
+                    Toast.makeText(this,"無法找到檔案",Toast.LENGTH_LONG).show();
+                }
+
+                break;
+            case 200:
+                if (resultCode == Activity.RESULT_OK) {
+//                        if (data != null) {
+//                            Bitmap bmp = BitmapFactory.decodeFile(tmpFile.getAbsolutePath());
+//                            imageView.setImageBitmap(bmp);
+////                            Bitmap bmp = (Bitmap)data.getExtras().get("data");
+////                            Bitmap bmp = BitmapFactory.decodeFile(Environment.getExternalStorageDirectory()+ "/image.jpg");
+////                            imageView.setImageBitmap(bmp);
+//                        } else {
+                        if (tmpFile.exists()) {
+//--------------------------更新相片資料到外部儲存裝置上-------------------------------------------------
+                            Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                            File f = new File(tmpFile.toString());
+                            Uri contentUri = Uri.fromFile(f);
+                            mediaScanIntent.setData(contentUri);
+                            this.sendBroadcast(mediaScanIntent);
+//--------------------------更新相片資料到外部儲存裝置上-------------------------------------------------
+                            String path = getPath(MainActivity.this, tmpFileUri);
                             CropDialog mCropDialog = new CropDialog(MainActivity.this, path);
                             mCropDialog.show();
                             mCropDialog.setOnCropFinishListener(new CropDialog.OnCropFinishListener() {
@@ -217,77 +235,14 @@ public class MainActivity extends AppCompatActivity {
                                     imageView.setImageBitmap(bmp);
                                 }
                             });
-
-//                            ContentResolver cr = this.getContentResolver();
-//                            try {
-//                                Bitmap bitmap = BitmapFactory.decodeStream(cr.openInputStream(uri));
-//                                imageView.setImageBitmap(bitmap);
-//                            } catch (Exception e) {
-//                                Log.v("brad", e.toString());
-//                            }
-                        }
-
-                        else{
-                            Log.v("brad","data =null");
-                            Toast.makeText(this,"無法找到檔案",Toast.LENGTH_LONG).show();
-                        }
-
-                        break;
-                    case 200:
-                        if (data !=null) {
-                            Log.v("brad","data!=null:"+tmpFile.getAbsolutePath().toString());
-//                            Bitmap bmp = BitmapFactory.decodeFile(tmpFile.getAbsolutePath());
-////                            Bitmap bmp = (Bitmap)data.getExtras().get("data");
-//                            imageView.setImageBitmap(bmp);
-////                            Bitmap bmp = BitmapFactory.decodeFile(Environment.getExternalStorageDirectory()+ "/image.jpg");
-////                            imageView.setImageBitmap(bmp);
-                        }else{
-                            if(tmpFile.exists()){
-                                //更新相片資料到外部儲存裝置上
-                                Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                                File f = new File(tmpFile.toString());
-                                Uri contentUri = Uri.fromFile(f);
-                                mediaScanIntent.setData(contentUri);
-                                this.sendBroadcast(mediaScanIntent);
-                                //更新相片資料到外部儲存裝置上
-
-                                String path = getPath(MainActivity.this, tmpFileUri);
-//                                String path = tmpFile.getAbsolutePath();
-                                CropDialog mCropDialog = new CropDialog(MainActivity.this, path);
-                                mCropDialog.show();
-
-                                mCropDialog.setOnCropFinishListener(new CropDialog.OnCropFinishListener() {
-                                    @Override
-                                    public void onCrop(String path) {
-                                        bmp = BitmapFactory.decodeFile(path);
-                                        imageView.setImageBitmap(bmp);
-                                    }
-                                });
-
-
-
 //                                Bitmap bmp = BitmapFactory.decodeFile(tmpFile.getAbsolutePath());
 //                                imageView.setImageBitmap(bmp);
-                            }else{
-                                Toast.makeText(this,"無法找到檔案",Toast.LENGTH_LONG).show();
-                            }
+                        } else {
+                            Toast.makeText(this, "無法找到檔案", Toast.LENGTH_LONG).show();
                         }
-                        break;
+//                        }
+                    break;
                 }
-//                if(requestCode == 100){
-//                    Uri uri = data.getData();
-//                    ContentResolver cr = this.getContentResolver();
-//                    try {
-//                        Bitmap bitmap = BitmapFactory.decodeStream(cr.openInputStream(uri));
-//                        ImageView imageView = (ImageView) findViewById(R.id.imageView);
-//                        imageView.setImageBitmap(bitmap);
-//                    } catch (Exception e) {
-//                        Log.v("brad", e.toString());
-//                    }
-//                }
-//            }else{
-//                Toast.makeText(this,"無法找到檔案",Toast.LENGTH_LONG).show();
-//            }
         }
     }
 
@@ -445,7 +400,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    //-----------------------------------------------------------
+//-------------------------------------------------------------------------------------
 
     private class MyThread extends Thread{
         @Override
@@ -457,7 +412,6 @@ public class MainActivity extends AppCompatActivity {
             greyImg(bmp).compress(Bitmap.CompressFormat.JPEG,100,stream);
             byte[] bytes = stream.toByteArray();
             Log.v("brad","bmp轉byte");
-
             data.putByteArray("bmp", bytes);
             mesg.setData(data);
             uiHandler.sendMessage(mesg);
@@ -476,48 +430,37 @@ public class MainActivity extends AppCompatActivity {
         String gCodeName = "gcode"+System.currentTimeMillis()+".txt";
         File gCodeFile = new File(path,gCodeName);
         Log.v("brad","gCodeFile:"+gCodeFile.toString());
-
+        long StartTime = System.nanoTime();
         try {
             FileOutputStream output = new FileOutputStream(gCodeFile,true);
-
-
             for(int i=0; i<= list.size();i++){
                 try {
-                    Info getinfo =(Info) list.get(i);
-                    String x = getinfo.getX();
-                    String y = getinfo.getY();
-                    String z = getinfo.getZ();
-                    output.write("x".getBytes());
-                    output.write(x.getBytes());
-                    output.write(" y".getBytes());
-//                    output.write("y".getBytes());
-                    output.write(y.getBytes());
-                    output.write(" z".getBytes());
-//                    output.write("z".getBytes());
-                    output.write(z.getBytes());
-                    output.write("\r\n".getBytes());
+                    Info getinfo =list.get(i);
+                    FileWriter fw = new FileWriter(gCodeFile);
+                    BufferedWriter bw = new BufferedWriter(fw);
+                    bw.write(("x" + getinfo.getX() + " y" + getinfo.getY() + " z" + getinfo.getZ() + "\r\n"));
 
-//                    String coordinate ="x"+getinfo.getX()+" y"+getinfo.getY()+" z"+getinfo.getZ();
-//                    output.write(coordinate.getBytes());
-//                    output.write("\r\n".getBytes());
-                    output.flush();
-
+//                    Info getinfo =list.get(i);
+//                    output.write(("x" + getinfo.getX() + " y" + getinfo.getY() + " z" + getinfo.getZ() + "\r\n").getBytes());
                 } catch (Exception e) {
                     Log.v("brad", e.toString());
                 }
             }
+            output.flush();
             output.close();
-        } catch (Exception e) {
-            Log.v("brad",e.toString());
-        }
-
-//        Info getinfo =(Info) list.get(0);
-//        String x = getinfo.getX();
-//        Log.v("brad",x);
-//        String y = getinfo.getY();
-//        Log.v("brad",y);
-//        String z = getinfo.getZ();
-//        Log.v("brad",z);
+            } catch (Exception e) {
+                Log.v("brad",e.toString());
+            }
+            long EndTime = System.nanoTime();
+            final long execTimeMs = (EndTime - StartTime) / 1000000;
+            Log.v("brad","total cost time(ms): " + execTimeMs);
+            Log.v("brad","output finished");
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(MainActivity.this, "檔案完成，共花了"+ execTimeMs+"秒", Toast.LENGTH_LONG).show();
+                }
+            });
         }
     }
 
@@ -630,42 +573,4 @@ public class MainActivity extends AppCompatActivity {
         return result;
 
     }
-    //-----------------------------------------------------------
-
-    //-----------------------自訂類別----------------------------
-//    public class Info {
-//        public String x;
-//        public String y;
-//        public String z;
-//        int gray;
-//        public void setX(String x) {
-//            this.x = x;
-//        }
-//        public void setY(String y) {
-//            this.y = y;
-//        }
-//        public void setZ(String z) {
-//            this.z = z;
-//        }
-//        public void setGray(int gray) {
-//            this.gray = gray;
-//        }
-//        public String getX() {
-//            return x;
-//        }
-//        public String getY() {
-//            return y;
-//        }
-//        public String getZ() {
-//            return z;
-//        }
-//        public int getGray() {
-//            return gray;
-//        }
-//    }
-
-
-    //-----------------------自訂類別----------------------------
-
-
 }
