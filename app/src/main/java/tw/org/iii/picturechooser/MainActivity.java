@@ -30,6 +30,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import java.io.BufferedWriter;
@@ -54,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
     UIHandler uiHandler;
     Info info;
     ArrayList<Info> list = new ArrayList<>();
+    ProgressBar progressBar;
 
 
     @Override
@@ -69,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
         test = (Button)findViewById(R.id.test);
         grey1.setEnabled(false);
         test.setEnabled(false);
+        progressBar = (ProgressBar)findViewById(R.id.progressBar);
 
 
         if (ActivityCompat.checkSelfPermission(this,
@@ -440,6 +443,7 @@ public class MainActivity extends AppCompatActivity {
                     Info getinfo =list.get(i);
                     bw.write(("x" + getinfo.getX() + " y" + getinfo.getY() + " z" + getinfo.getZ() + "\r\n"));
 
+
 //                    Info getinfo =list.get(i);
 //                    output.write(("x" + getinfo.getX() + " y" + getinfo.getY() + " z" + getinfo.getZ() + "\r\n").getBytes());
                 } catch (Exception e) {
@@ -460,11 +464,14 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     Toast.makeText(MainActivity.this, "檔案完成，共花了"+ finTimes+"秒", Toast.LENGTH_LONG).show();
+                    progressBar.setMax(list.size());
+//---------------------------------檔案更新-------------------------------------------
                     Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
                     File f = new File(gCodeFile.toString());
                     Uri contentUri = Uri.fromFile(f);
                     mediaScanIntent.setData(contentUri);
                     MainActivity.this.sendBroadcast(mediaScanIntent);
+//---------------------------------檔案更新-------------------------------------------
                 }
             });
         }
@@ -563,6 +570,8 @@ public class MainActivity extends AppCompatActivity {
 
                 grey = alpha | (grey << 16) | (grey << 8) | grey;
                 pixels[width * i + k] = grey;
+
+
             }
         }
 
