@@ -452,6 +452,7 @@ public class MainActivity extends AppCompatActivity {
             }
             output.flush();
             output.close();
+            list.clear();
             } catch (Exception e) {
                 Log.v("brad",e.toString());
             }
