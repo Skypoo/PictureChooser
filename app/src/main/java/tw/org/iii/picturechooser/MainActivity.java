@@ -458,7 +458,7 @@ public class MainActivity extends AppCompatActivity {
             }
             long EndTime = System.nanoTime();
             final long execTimeMs = (EndTime - StartTime) / 1000000;
-            final long finTimes = execTimeMs/100;
+            final long finTimes = execTimeMs/1000;
             Log.v("brad","total cost time(ms): " + execTimeMs);
             Log.v("brad","output finished");
             runOnUiThread(new Runnable() {
