@@ -92,7 +92,9 @@ public class DisplayImageDialog extends Dialog{
         gCodeBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                GcodeThread gt1 = new GcodeThread();
+                gt1.start();
+                gCodeBtn.setEnabled(false);
             }
         });
     }
