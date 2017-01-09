@@ -3,7 +3,6 @@ package tw.org.iii.picturechooser;
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
@@ -16,8 +15,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.Message;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
@@ -26,45 +23,28 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
-    Button picker,camera,grey1,test;
+    Button picker,camera;
+//    Button grey1,test;
     private static final int REQUEST_EXTERNAL_STORAGE = 200;
     File tmpFile,chooserFile,path;
-    ImageView imageView;
+//    ImageView imageView;
     Uri tmpFileUri,chooserFileUri;
     Bitmap bmp;
-    int grey;
-    UIHandler uiHandler;
-    Info info;
-    ArrayList<Info> list = new ArrayList<>();
     ProgressBar progressBar;
 
-    ProgressDialog progressDialog;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        imageView = (ImageView) findViewById(R.id.imageView);
+//        imageView = (ImageView) findViewById(R.id.imageView);
         camera = (Button)findViewById(R.id.camera);
         picker = (Button)findViewById(R.id.chooser);
-        grey1 = (Button)findViewById(R.id.grey);
-        uiHandler = new UIHandler();
-        test = (Button)findViewById(R.id.test);
-        grey1.setEnabled(false);
-        test.setEnabled(false);
-        progressBar = (ProgressBar)findViewById(R.id.progressBar);
-
 
         if (ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.CAMERA) !=
@@ -87,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Log.v("brad","initCamera Click");
                 initCamera();
-                grey1.setEnabled(true);
+//                grey1.setEnabled(true);
             }
         });
 
@@ -95,31 +75,21 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 initPictureChooser();
-                grey1.setEnabled(true);
+//                grey1.setEnabled(true);
                 Log.v("brad","initPictureChooser Click");
             }
         });
 
-        grey1.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.v("brad","灰階onClick");
-                progressDialog = ProgressDialog.show(MainActivity.this, "讀取中", "請等待...",true);
-                MyThread mt1 = new MyThread();
-                mt1.start();
-                test.setEnabled(true);
-                grey1.setEnabled(false);
-            }
-        });
 
-        test.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                GcodeThread gt1 = new GcodeThread();
-                gt1.start();
-                test.setEnabled(false);
-            }
-        });
+//
+//        test.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                GcodeThread gt1 = new GcodeThread();
+//                gt1.start();
+//                test.setEnabled(false);
+//            }
+//        });
     }
 
     @Override
@@ -193,8 +163,10 @@ public class MainActivity extends AppCompatActivity {
                     mCropDialog.setOnCropFinishListener(new CropDialog.OnCropFinishListener() {
                         @Override
                         public void onCrop(String path) {
-                            bmp = BitmapFactory.decodeFile(path);
-                            imageView.setImageBitmap(bmp);
+                            if(path != null && !path.equals("")) {
+                                bmp = BitmapFactory.decodeFile(path);
+                                new DisplayImageDialog(MainActivity.this, bmp).show();
+                            }
                         }
                     });
                 }
@@ -206,13 +178,6 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case 200:
                 if (resultCode == Activity.RESULT_OK) {
-//                        if (data != null) {
-//                            Bitmap bmp = BitmapFactory.decodeFile(tmpFile.getAbsolutePath());
-//                            imageView.setImageBitmap(bmp);
-////                            Bitmap bmp = (Bitmap)data.getExtras().get("data");
-////                            Bitmap bmp = BitmapFactory.decodeFile(Environment.getExternalStorageDirectory()+ "/image.jpg");
-////                            imageView.setImageBitmap(bmp);
-//                        } else {
                         if (tmpFile.exists()) {
 //--------------------------更新相片資料到外部儲存裝置上-------------------------------------------------
                             Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
@@ -227,16 +192,15 @@ public class MainActivity extends AppCompatActivity {
                             mCropDialog.setOnCropFinishListener(new CropDialog.OnCropFinishListener() {
                                 @Override
                                 public void onCrop(String path) {
-                                    bmp = BitmapFactory.decodeFile(path);
-                                    imageView.setImageBitmap(bmp);
+                                    if(path != null && !path.equals("")) {
+                                        bmp = BitmapFactory.decodeFile(path);
+                                        new DisplayImageDialog(MainActivity.this, bmp).show();
+                                    }
                                 }
                             });
-//                                Bitmap bmp = BitmapFactory.decodeFile(tmpFile.getAbsolutePath());
-//                                imageView.setImageBitmap(bmp);
                         } else {
                             Toast.makeText(this, "無法找到檔案", Toast.LENGTH_LONG).show();
                         }
-//                        }
                     break;
                 }
         }
@@ -253,16 +217,7 @@ public class MainActivity extends AppCompatActivity {
         return new File(path, albumName);
     }
 
-    private File getExtermalStoragePublicDownLoadsDir(String albumName) {
-        File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-        if(path.mkdir()){
-            File f = new File(path, albumName);
-            if(f.mkdir()){
-                return f;
-            }
-        }
-        return new File(path, albumName);
-    }
+
 
     /**
      * Get a file path from a Uri. This will get the the path for Storage Access
@@ -398,190 +353,9 @@ public class MainActivity extends AppCompatActivity {
 
 //-------------------------------------------------------------------------------------
 
-    private class MyThread extends Thread{
-        @Override
-        public void run() {
-
-            Message mesg = new Message();
-            Bundle data = new Bundle();
-            ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            greyImg(bmp).compress(Bitmap.CompressFormat.JPEG,100,stream);
-            byte[] bytes = stream.toByteArray();
-            Log.v("brad","bmp轉byte");
-            data.putByteArray("bmp", bytes);
-            mesg.setData(data);
-            uiHandler.sendMessage(mesg);
-        }
-    }
-
-    private class GcodeThread extends Thread{
-        @Override
-        public void run() {
-
-        File path = getExtermalStoragePublicDownLoadsDir("picturechooser");
-        Log.v("brad","greyImg:"+path.toString());
-        if(!path.exists()){
-            path.mkdir();
-        }
-        String gCodeName = "gcode"+System.currentTimeMillis()+".txt";
-        final File gCodeFile = new File(path,gCodeName);
-        Log.v("brad","gCodeFile:"+gCodeFile.toString());
-        long StartTime = System.nanoTime();
-        try {
-            FileOutputStream output = new FileOutputStream(gCodeFile,true);
-            FileWriter fw = new FileWriter(gCodeFile);
-            BufferedWriter bw = new BufferedWriter(fw);
-            for(int i=0; i< list.size();i++){
-                try {
-                    Info getinfo =list.get(i);
-                    bw.write(("x" + getinfo.getX() + " y" + getinfo.getY() + " z" + getinfo.getZ() + "\r\n"));
 
 
-//                    Info getinfo =list.get(i);
-//                    output.write(("x" + getinfo.getX() + " y" + getinfo.getY() + " z" + getinfo.getZ() + "\r\n").getBytes());
-                } catch (Exception e) {
-                    Log.v("brad", e.toString());
-                }
-            }
-            output.flush();
-            output.close();
-            list.clear();
-            } catch (Exception e) {
-                Log.v("brad",e.toString());
-            }
-            long EndTime = System.nanoTime();
-            final long execTimeMs = (EndTime - StartTime) / 1000000;
-            final long finTimes = execTimeMs/1000;
-            Log.v("brad","total cost time(ms): " + execTimeMs);
-            Log.v("brad","output finished");
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(MainActivity.this, "檔案完成，共花了"+ finTimes+"秒", Toast.LENGTH_LONG).show();
-                    progressBar.setMax(list.size());
-//---------------------------------檔案更新-------------------------------------------
-                    Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                    File f = new File(gCodeFile.toString());
-                    Uri contentUri = Uri.fromFile(f);
-                    mediaScanIntent.setData(contentUri);
-                    MainActivity.this.sendBroadcast(mediaScanIntent);
-//---------------------------------檔案更新-------------------------------------------
-                }
-            });
-        }
-    }
-
-    private class UIHandler extends Handler{
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-
-            Bundle data = msg.getData();
-            byte[] bytes = data.getByteArray("bmp");
-            bmp = BitmapFactory.decodeByteArray(bytes,0,bytes.length);
-            Log.v("brad","byte轉bmp");
-            imageView.setImageBitmap(bmp);
-            if(progressDialog.isShowing()) {
-                progressDialog.hide();
-            }
-        }
-    }
-
-    public Bitmap greyImg(Bitmap img){
-
-//-----------------------寫gcode.txt檔案------------------------------
-//        File path = getExtermalStoragePublicDownLoadsDir("picturechooser");
-//        Log.v("brad","greyImg:"+path.toString());
-//        if(!path.exists()){
-//            path.mkdir();
-//        }
-//        String gCodeName = "gcode"+System.currentTimeMillis()+".txt";
-//        File gCodeFile = new File(path,gCodeName);
-//        Log.v("brad","gCodeFile:"+gCodeFile.toString());
-//-----------------------寫gcode.txt檔案------------------------------
 
 
-        int width = img.getWidth();
-        //int width = 600;
-        int height = img.getHeight();
-        //int height = 300;
-        int pixels[] = new int[width*height];
-        img.getPixels(pixels, 0, width, 0, 0, width, height);
-        int alpha = 0xFF <<24;
-        int k;
 
-
-//-----------------------寫gcode.txt檔案------------------------------
-//        try {
-//            FileOutputStream output = new FileOutputStream(gCodeFile,true);
-//-----------------------寫gcode.txt檔案------------------------------
-
-        for(int i = 0; i < height; i++) {
-            for (int j = 0; j < width; j++) {
-
-                if (i % 2 ==1){
-                    k = width-j-1;
-                }else{
-                    k = j;
-                }
-
-                grey = pixels[width * i + k];
-                int red = ((grey & 0x00FF0000) >> 16);
-                int green = ((grey & 0x0000FF00) >> 8);
-                int blue = (grey & 0x000000FF);
-                grey = (int) ((float) red * 0.3 + (float) green * 0.59 + (float) blue * 0.11);
-
-
-                float fGrey = grey;
-                float elevationScale = (fGrey / 255) * 5;
-                float elevation = (float) (Math.round(elevationScale * 100)) / 100;
-//                Log.v("brad", "準備寫檔");
-                String x = Integer.toString(k);
-                String y = Integer.toString(i);
-                String z = Float.toString(elevation);
-
-                info = new Info();
-                info.setX(x);
-                info.setY(y);
-                info.setZ(z);
-                list.add(info);
-
-//-----------------------寫gcode.txt檔案------------------------------
-//                try {
-//                    output.write("x".getBytes());
-//                    output.write(x.getBytes());
-//                    output.write(" ".getBytes());
-//                    output.write("y".getBytes());
-//                    output.write(y.getBytes());
-//                    output.write(" ".getBytes());
-//                    output.write("z".getBytes());
-//                    output.write(z.getBytes());
-//                    output.write("\r\n".getBytes());
-//                    output.flush();
-//
-//                } catch (Exception e) {
-//                    Log.v("brad", e.toString());
-//                }
-//-----------------------寫gcode.txt檔案------------------------------
-
-                grey = alpha | (grey << 16) | (grey << 8) | grey;
-                pixels[width * i + k] = grey;
-
-
-            }
-        }
-
-//-----------------------寫gcode.txt檔案------------------------------
-//            output.close();
-//        } catch (Exception e) {
-//            e.toString();
-//        }
-//-----------------------寫gcode.txt檔案------------------------------
-
-
-        Bitmap result = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
-        result.setPixels(pixels, 0, width, 0, 0, width, height);
-        return result;
-
-    }
 }

@@ -1,61 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/activity_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    >
-
-    <LinearLayout
-        android:layout_width="match_parent"
+    android:orientation="vertical">
+    <Button
+        android:layout_centerInParent="true"
+        android:id="@+id/chooser"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        >
+        android:text="選擇圖片" />
 
-        <Button
-            android:id="@+id/chooser"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="選擇圖片"
-            android:layout_weight="1"
-            />
-
-        <Button
-            android:id="@+id/camera"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="使用相機"
-            android:layout_weight="1"
-            />
-
-        <Button
-        android:id="@+id/grey"
-        android:layout_width="match_parent"
+    <Button
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/chooser"
+        android:id="@+id/camera"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="轉灰階"
-        android:layout_weight="1"
-        />
-
-        <Button
-            android:id="@+id/test"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="test"
-            android:layout_weight="1"
-            />
-
-    </LinearLayout>
-
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        style="?android:attr/progressBarStyleHorizontal"
-        />
-
-    <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        />
-</LinearLayout>
+        android:text="使用相機" />
+</RelativeLayout>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:background="#ffffff"
+    android:layout_height="match_parent">
+    <android.support.v7.widget.Toolbar
+        android:background="?attr/colorPrimary"
+        android:id="@+id/toolbar"
+        android:minHeight="?actionBarSize"
+        android:layout_width="match_parent"
+        android:layout_height="?actionBarSize" />
+    <RelativeLayout
+        android:layout_below="@id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_alignParentBottom="true"
+            android:id="@+id/button_layout"
+            android:gravity="center_horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <Button
+                android:id="@+id/gcode_btn"
+                android:textSize="16sp"
+                android:text="GCode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <Button
+                android:id="@+id/gray_btn"
+                android:textSize="16sp"
+                android:text="Gray"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+        <View
+            android:id="@+id/divider"
+            android:layout_above="@id/button_layout"
+            android:background="#929292"
+            android:layout_width="match_parent"
+            android:layout_height="1px"/>
+        <ImageView
+            android:id="@+id/img"
+            android:layout_above="@id/divider"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </RelativeLayout>
+</RelativeLayout>
