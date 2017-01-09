@@ -3,7 +3,7 @@ package tw.org.iii.picturechooser;
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.content.ContentResolver;
+import android.app.ProgressDialog;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
@@ -12,20 +12,17 @@ import android.content.res.Configuration;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.os.PersistableBundle;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
-import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -36,13 +33,9 @@ import android.widget.Toast;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     Button picker,camera,grey1,test;
@@ -57,12 +50,11 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<Info> list = new ArrayList<>();
     ProgressBar progressBar;
 
-
+    ProgressDialog progressDialog;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         imageView = (ImageView) findViewById(R.id.imageView);
         camera = (Button)findViewById(R.id.camera);
         picker = (Button)findViewById(R.id.chooser);
@@ -112,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Log.v("brad","灰階onClick");
+                progressDialog = ProgressDialog.show(MainActivity.this, "讀取中", "請等待...",true);
                 MyThread mt1 = new MyThread();
                 mt1.start();
                 test.setEnabled(true);
@@ -488,7 +481,9 @@ public class MainActivity extends AppCompatActivity {
             bmp = BitmapFactory.decodeByteArray(bytes,0,bytes.length);
             Log.v("brad","byte轉bmp");
             imageView.setImageBitmap(bmp);
-
+            if(progressDialog.isShowing()) {
+                progressDialog.hide();
+            }
         }
     }
 
