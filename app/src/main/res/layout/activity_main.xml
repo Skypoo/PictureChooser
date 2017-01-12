@@ -3,19 +3,29 @@
     android:id="@+id/activity_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@drawable/background"
+    >
+
+
     <Button
-        android:layout_centerInParent="true"
         android:id="@+id/chooser"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="選擇圖片" />
+        android:background="@drawable/document"
+        android:layout_marginTop="150dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignLeft="@+id/camera"
+        android:layout_alignStart="@+id/camera" />
 
     <Button
-        android:layout_centerHorizontal="true"
-        android:layout_below="@id/chooser"
         android:id="@+id/camera"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="使用相機" />
+        android:background="@drawable/camera"
+
+
+        android:layout_marginTop="60dp"
+        android:layout_below="@+id/chooser"
+        android:layout_centerHorizontal="true" />
 </RelativeLayout>

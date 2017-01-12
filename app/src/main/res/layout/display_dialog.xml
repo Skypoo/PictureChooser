@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
     android:background="#ffffff"
     android:layout_height="match_parent">
     <android.support.v7.widget.Toolbar
@@ -12,7 +13,9 @@
     <RelativeLayout
         android:layout_below="@id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+
+        >
         <LinearLayout
             android:orientation="horizontal"
             android:layout_alignParentBottom="true"
@@ -20,19 +23,22 @@
             android:gravity="center_horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-            <Button
-                android:id="@+id/gcode_btn"
-                android:textSize="16sp"
-                android:text="GCode"
-                android:enabled="false"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+
             <Button
                 android:id="@+id/gray_btn"
                 android:textSize="16sp"
-                android:text="Gray"
+                android:text="轉灰階"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
+
+            <Button
+                android:id="@+id/gcode_btn"
+                android:textSize="16sp"
+                android:text="G-code"
+                android:enabled="false"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
         </LinearLayout>
         <View
             android:id="@+id/divider"
@@ -41,10 +47,12 @@
             android:layout_width="match_parent"
             android:layout_height="1px"/>
         <ImageView
-            android:scaleType="centerCrop"
+            android:scaleType="centerInside"
             android:id="@+id/img"
             android:layout_above="@id/divider"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            android:background="@drawable/background"
+            />
     </RelativeLayout>
 </RelativeLayout>

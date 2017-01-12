@@ -61,7 +61,7 @@ public class DisplayImageDialog extends Dialog{
     private void initView() {
         setContentView(R.layout.display_dialog);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
-        toolbar.setTitle("Display");
+        toolbar.setTitle("返回");
         toolbar.setTitleTextColor(Color.parseColor("#ffffff"));
         toolbar.setNavigationIcon(R.drawable.navi_icon_back2);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
@@ -80,7 +80,7 @@ public class DisplayImageDialog extends Dialog{
             @Override
             public void onClick(View v) {
                 Log.v("brad","灰階onClick");
-                progressDialog = ProgressDialog.show(mContext, "讀取中", "請等待...",true);
+                progressDialog = ProgressDialog.show(mContext, "轉換中", "請等待...",true);
                 MyThread mt1 = new MyThread();
                 mt1.start();
                 gCodeBtn.setEnabled(true);
@@ -160,7 +160,7 @@ public class DisplayImageDialog extends Dialog{
 
 
                 float fGrey = grey;
-                float elevationScale = (fGrey / 255) * 5;
+                float elevationScale = (fGrey / 255) * 30;
                 float elevation = (float) (Math.round(elevationScale * 100)) / 100;
 //                Log.v("brad", "準備寫檔");
                 String x = Integer.toString(k);
@@ -244,6 +244,7 @@ public class DisplayImageDialog extends Dialog{
                 FileOutputStream output = new FileOutputStream(gCodeFile,true);
                 FileWriter fw = new FileWriter(gCodeFile);
                 BufferedWriter bw = new BufferedWriter(fw);
+                bw.write("G90 G01" + "\r\n");
                 for(int i=0; i< list.size();i++){
                     try {
                         Info getinfo =list.get(i);
@@ -270,14 +271,14 @@ public class DisplayImageDialog extends Dialog{
             ((Activity)mContext).runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(mContext, "檔案完成，共花了"+ finTimes+"秒", Toast.LENGTH_LONG).show();
+                    Toast.makeText(mContext, "檔案完成，花了"+ finTimes+"秒", Toast.LENGTH_LONG).show();
 //                    progressBar.setMax(list.size());
 //---------------------------------檔案更新-------------------------------------------
                     Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
                     File f = new File(gCodeFile.toString());
                     Uri contentUri = Uri.fromFile(f);
                     mediaScanIntent.setData(contentUri);
-//                    MainActivity.this.sendBroadcast(mediaScanIntent);
+                    mContext.sendBroadcast(mediaScanIntent);
 //---------------------------------檔案更新-------------------------------------------
                 }
             });
